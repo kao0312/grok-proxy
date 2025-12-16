@@ -1,0 +1,64 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CLAUDE.md
+*.md
+
+# CI/CD
+.github/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables (should be passed at runtime)
+.env
+.env.local
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+grok-proxy
+
+# Test files
+*_test.go
+*.test
+
+# Coverage reports
+*.out
+coverage.txt
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Image storage (runtime generated)
+image/
+
+# Docker files (not needed in image)
+Dockerfile
+.dockerignore
+docker-compose.yml
