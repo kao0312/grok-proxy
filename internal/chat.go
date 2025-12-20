@@ -330,6 +330,7 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 
 		var streamResp GrokStreamResponse
 		if err := json.Unmarshal([]byte(line), &streamResp); err != nil {
+			LogError("Failed to parse upstream response: %v, line: %s", err, line)
 			continue
 		}
 
@@ -395,6 +396,11 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 		}
 	}
 
+	// 检查扫描器是否因错误而退出
+	if err := scanner.Err(); err != nil {
+		LogError("Scanner error while reading upstream response: %v", err)
+	}
+
 	// 分享会话以公开图片访问权限
 	if len(imageURLs) > 0 && conversationID != "" && responseID != "" {
 		if err := shareConversation(conversationID, responseID, cookie); err != nil {
@@ -434,6 +440,7 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 
 		var streamResp GrokStreamResponse
 		if err := json.Unmarshal([]byte(line), &streamResp); err != nil {
+			LogError("Failed to parse upstream response: %v, line: %s", err, line)
 			continue
 		}
 
@@ -486,6 +493,11 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 		if grokResp.Token != "" && !grokResp.IsThinking {
 			finalContent += grokResp.Token
 		}
+	}
+
+	// 检查扫描器是否因错误而退出
+	if err := scanner.Err(); err != nil {
+		LogError("Scanner error while reading upstream response: %v", err)
 	}
 
 	if len(imageURLs) > 0 && conversationID != "" && responseID != "" {

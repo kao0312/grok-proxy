@@ -66,7 +66,7 @@ func SetUploadHeaders(req *http.Request, cookie string) {
 // TLS 客户端（伪装成 Chrome 浏览器）
 func GetHTTPClient() tls_client.HttpClient {
 	options := []tls_client.HttpClientOption{
-		tls_client.WithTimeoutSeconds(60),
+		tls_client.WithTimeoutSeconds(600),
 		tls_client.WithClientProfile(profiles.Chrome_131),
 		tls_client.WithRandomTLSExtensionOrder(), // 随机 TLS 扩展顺序，必须启用
 	}
