@@ -19,21 +19,21 @@ var ModelMapping = map[string]ModelConfig{
 		ModelName: "grok-4",
 		ModelMode: "MODEL_MODE_EXPERT",
 	},
+	"grok-4-auto": {
+		ModelName: "grok-4-auto",
+		ModelMode: "MODEL_MODE_AUTO",
+	},
 	"grok-4-fast": {
 		ModelName: "grok-4-mini-thinking-tahoe",
 		ModelMode: "MODEL_MODE_GROK_4_MINI_THINKING",
 	},
-	"grok-4-heavy": {
-		ModelName: "grok-4-heavy",
-		ModelMode: "MODEL_MODE_HEAVY",
-	},
-	"grok-4.1": {
-		ModelName: "grok-4-1-non-thinking-w-tool",
-		ModelMode: "MODEL_MODE_GROK_4_1_NON_THINKING",
-	},
+	// "grok-4.1": {
+	// 	ModelName: "grok-4-1-non-thinking-w-tool",
+	// 	ModelMode: "MODEL_MODE_GROK_4_1_NON_THINKING",
+	// },
 	"grok-4.1-thinking": {
 		ModelName: "grok-4-1-thinking-1129", // grok-4-1-thinking-1108b
-		ModelMode: "MODEL_MODE_GROK_4_1_THINKING_1129",
+		ModelMode: "MODEL_MODE_GROK_4_1_THINKING",
 	},
 }
 

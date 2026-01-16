@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=builder /app/grok-proxy .
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["./grok-proxy"]

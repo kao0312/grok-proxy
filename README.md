@@ -64,21 +64,20 @@ docker run -d \
 
 ## 支持的模型
 
-| 模型名称 | 说明 |
+| 模型名称 | ModelMode |
 |----------|------|
-| grok-3 | Grok 3 基础模型 |
-| grok-4 | Grok 4 基础模型 |
-| grok-4-fast | Grok 4 快速版本 |
-| grok-4-heavy | Grok 4 高级版本 |
-| grok-4.1 | Grok 4.1 标准版 |
-| grok-4.1-thinking | Grok 4.1 思考模式 |
+| grok-3 | MODEL_MODE_FAST |
+| grok-4 | MODEL_MODE_EXPERT |
+| grok-4-auto | MODEL_MODE_AUTO |
+| grok-4-fast | MODEL_MODE_GROK_4_MINI_THINKING |
+| grok-4.1-thinking | MODEL_MODE_GROK_4_1_THINKING |
 
 ## 使用示例
 
 ### 基础对话
 
 ```bash
-curl http://localhost:8000/v1/chat/completions \
+curl http://localhost:8080/v1/chat/completions \
   -H "Authorization: Bearer YOUR_GROK_COOKIE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -108,7 +107,7 @@ curl http://localhost:8000/v1/chat/completions \
 ### 查看可用模型
 
 ```bash
-curl http://localhost:8000/v1/models
+curl http://localhost:8080/v1/models
 ```
 
 ## 支持的图片格式
