@@ -258,17 +258,6 @@ type StreamingImageGen struct {
 	ImageModel string `json:"imageModel,omitempty"`
 }
 
-// ShareRequest 会话分享请求
-type ShareRequest struct {
-	ResponseID    string `json:"responseId"`
-	AllowIndexing bool   `json:"allowIndexing"`
-}
-
-// ShareResponse 会话分享响应
-type ShareResponse struct {
-	ShareLinkID string `json:"shareLinkId"`
-}
-
 // ToolUsageCardData 工具使用卡片（grok-4.20 讨论组）
 type ToolUsageCardData struct {
 	ChatroomSend *ChatroomSend `json:"chatroomSend,omitempty"`

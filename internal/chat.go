@@ -318,7 +318,6 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var imageURLs []string
-	var conversationID, responseID string
 
 	writeSSE(w, createChunk(model, "", "", false, true))
 	flusher.Flush()
@@ -353,19 +352,11 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 			continue
 		}
 
-		if data.Conversation != nil && data.Conversation.ConversationID != "" {
-			conversationID = data.Conversation.ConversationID
-		}
-
 		if data.Response == nil {
 			continue
 		}
 
 		grokResp := data.Response
-
-		if grokResp.ResponseID != "" {
-			responseID = grokResp.ResponseID
-		}
 
 		// 只收集最终图片（progress=100），过滤掉中间的 part 图片
 		if grokResp.StreamingImageGenerationResponse != nil && grokResp.StreamingImageGenerationResponse.ImageURL != "" {
@@ -421,21 +412,19 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 		LogError("Scanner error while reading upstream response: %v", err)
 	}
 
-	// 分享会话以公开图片访问权限
-	if len(imageURLs) > 0 && conversationID != "" && responseID != "" {
-		if err := shareConversation(conversationID, responseID, cookie); err != nil {
-			LogError("Failed to share conversation: %v", err)
-		} else {
-			LogInfo("Conversation shared successfully: %s", conversationID)
-		}
-
+	// 下载图片并转为 base64 返回
+	if len(imageURLs) > 0 {
 		for i, imageURL := range imageURLs {
-			fullURL := AssetsURL + "/" + imageURL
+			base64URI, err := DownloadImageAsBase64(imageURL, cookie)
+			if err != nil {
+				LogError("Failed to download image %s: %v", imageURL, err)
+				continue
+			}
 			prefix := "\n"
 			if i == 0 {
 				prefix = "\n\n"
 			}
-			content := fmt.Sprintf("%s![image](%s)", prefix, fullURL)
+			content := fmt.Sprintf("%s![image](%s)", prefix, base64URI)
 			writeSSE(w, createChunk(model, content, "", false, false))
 			flusher.Flush()
 		}
@@ -451,7 +440,6 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var finalContent, reasoningContent string
 	var imageURLs []string
-	var conversationID, responseID string
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -477,19 +465,11 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 			continue
 		}
 
-		if data.Conversation != nil && data.Conversation.ConversationID != "" {
-			conversationID = data.Conversation.ConversationID
-		}
-
 		if data.Response == nil {
 			continue
 		}
 
 		grokResp := data.Response
-
-		if grokResp.ResponseID != "" {
-			responseID = grokResp.ResponseID
-		}
 
 		// 只收集最终图片（progress=100），过滤掉中间的 part 图片
 		if grokResp.StreamingImageGenerationResponse != nil && grokResp.StreamingImageGenerationResponse.ImageURL != "" {
@@ -538,20 +518,19 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 		LogError("Scanner error while reading upstream response: %v", err)
 	}
 
-	if len(imageURLs) > 0 && conversationID != "" && responseID != "" {
-		if err := shareConversation(conversationID, responseID, cookie); err != nil {
-			LogError("Failed to share conversation: %v", err)
-		} else {
-			LogInfo("Conversation shared successfully: %s", conversationID)
-		}
-
+	// 下载图片并转为 base64 返回
+	if len(imageURLs) > 0 {
 		for i, imageURL := range imageURLs {
-			fullURL := AssetsURL + "/" + imageURL
+			base64URI, err := DownloadImageAsBase64(imageURL, cookie)
+			if err != nil {
+				LogError("Failed to download image %s: %v", imageURL, err)
+				continue
+			}
 			prefix := "\n"
 			if i == 0 {
 				prefix = "\n\n"
 			}
-			finalContent += fmt.Sprintf("%s![image](%s)", prefix, fullURL)
+			finalContent += fmt.Sprintf("%s![image](%s)", prefix, base64URI)
 		}
 	}
 
@@ -581,44 +560,4 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(chatResp)
-}
-
-func shareConversation(conversationID, responseID, cookie string) error {
-	body, err := json.Marshal(ShareRequest{
-		ResponseID:    responseID,
-		AllowIndexing: true,
-	})
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("%s/rest/app-chat/conversations/%s/share", BaseURL, conversationID)
-	req, err := fhttp.NewRequest("POST", url, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-
-	SetChatHeaders(req, cookie)
-
-	client := GetHTTPClient()
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		bodyText := string(bodyBytes)
-		LogError("Share conversation failed - Status: %d, Response: %s", resp.StatusCode, bodyText)
-		return fmt.Errorf("share conversation failed: status %d", resp.StatusCode)
-	}
-
-	var shareResp ShareResponse
-	if err := json.NewDecoder(resp.Body).Decode(&shareResp); err != nil {
-		return err
-	}
-
-	LogDebug("Share response: %+v", shareResp)
-	return nil
 }

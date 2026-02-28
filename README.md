@@ -98,7 +98,5 @@ curl http://localhost:8080/v1/models
 ## 注意事项
 
 - Grok 不支持多轮对话历史，只能拼接历史消息
-- 若上游返回图片，会**公开聊天对话**以访问图床链接
 - System Prompt 会转换为 Grok 的 customPersonality 参数
-- **目前官网不显示思考内容**，因此 `reasoning_content` 仅展示搜索结果（包括非推理模型）
 - `tls-client` 库可绕过大部分 403 错误，依旧报错需要更换 IP

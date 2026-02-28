@@ -140,3 +140,42 @@ func ExtractAndUploadImages(messages []Message, cookie string) ([]string, error)
 
 	return fileIDs, nil
 }
+
+// 下载生成的图片并转为 base64 data URI
+func DownloadImageAsBase64(imageURL, cookie string) (string, error) {
+	fullURL := AssetsURL + "/" + imageURL
+
+	client := GetHTTPClient()
+	req, err := fhttp.NewRequest("GET", fullURL, nil)
+	if err != nil {
+		return "", err
+	}
+
+	SetCommonHeaders(req)
+	req.Header.Set("Cookie", cookie)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		LogError("Download image failed - Status: %d, Response: %s", resp.StatusCode, string(bodyBytes))
+		return "", fmt.Errorf("download image failed: status %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	mimeType := resp.Header.Get("Content-Type")
+	if mimeType == "" || !strings.HasPrefix(mimeType, "image/") {
+		mimeType = "image/jpeg"
+	}
+
+	b64 := base64.StdEncoding.EncodeToString(data)
+	return fmt.Sprintf("data:%s;base64,%s", mimeType, b64), nil
+}
