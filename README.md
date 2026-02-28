@@ -14,37 +14,17 @@ grok-proxy 是一个基于 Go 语言的代理服务，将 Grok 网页聊天转�
 
 ## 快速开始
 
-### 本地运行
-
 ```bash
-# 克隆项目
-git clone https://github.com/kao0312/grok-proxy.git
-cd grok-proxy
-
-# 安装依赖
-go mod download
-
-# 运行服务
-go run main.go
-```
-
-### Docker 部署
-
-```bash
-# 构建镜像
-docker build -t grok-proxy .
-
-# 运行容器
-docker run -d -p 8080:8080 grok-proxy
+docker run -d -p 8080:8080 ghcr.io/kao0312/grok-proxy:latest
 ```
 
 自定义配置：
 
 ```bash
 docker run -d \
-  -p 8000:8080 \
+  -p 8080:8080 \
   -e LOG_LEVEL=ERROR \
-  grok-proxy
+  ghcr.io/kao0312/grok-proxy:latest
 ```
 
 ## 环境变量
@@ -69,8 +49,8 @@ docker run -d \
 | grok-3 | MODEL_MODE_FAST |
 | grok-4 | MODEL_MODE_EXPERT |
 | grok-4-auto | MODEL_MODE_AUTO |
-| grok-4-fast | MODEL_MODE_GROK_4_MINI_THINKING |
 | grok-4.1-thinking | MODEL_MODE_GROK_4_1_THINKING |
+| grok-4.20 | MODEL_MODE_GROK_420 |
 
 ## 使用示例
 

@@ -23,10 +23,10 @@ var ModelMapping = map[string]ModelConfig{
 		ModelName: "grok-4-auto",
 		ModelMode: "MODEL_MODE_AUTO",
 	},
-	"grok-4-fast": {
-		ModelName: "grok-4-mini-thinking-tahoe",
-		ModelMode: "MODEL_MODE_GROK_4_MINI_THINKING",
-	},
+	// "grok-4-fast": {
+	// 	ModelName: "grok-4-mini-thinking-tahoe",
+	// 	ModelMode: "MODEL_MODE_GROK_4_MINI_THINKING",
+	// },
 	// "grok-4.1": {
 	// 	ModelName: "grok-4-1-non-thinking-w-tool",
 	// 	ModelMode: "MODEL_MODE_GROK_4_1_NON_THINKING",
@@ -34,6 +34,10 @@ var ModelMapping = map[string]ModelConfig{
 	"grok-4.1-thinking": {
 		ModelName: "grok-4-1-thinking-1129", // grok-4-1-thinking-1108b
 		ModelMode: "MODEL_MODE_GROK_4_1_THINKING",
+	},
+	"grok-4.20": {
+		ModelName: "grok-4-20",
+		ModelMode: "MODEL_MODE_GROK_420",
 	},
 }
 
@@ -200,6 +204,8 @@ type GrokResponse struct {
 	IsThinking                       bool               `json:"isThinking,omitempty"`
 	MessageTag                       string             `json:"messageTag,omitempty"`
 	ToolUsageCardID                  string             `json:"toolUsageCardId,omitempty"`
+	RolloutID                        string             `json:"rolloutId,omitempty"`
+	ToolUsageCard                    *ToolUsageCardData `json:"toolUsageCard,omitempty"`
 	WebSearchResults                 *WebSearchResults  `json:"webSearchResults,omitempty"`
 	CardAttachment                   *CardAttachment    `json:"cardAttachment,omitempty"`
 	CachedImageGenerationResponse    *CachedImageGen    `json:"cachedImageGenerationResponse,omitempty"`
@@ -222,15 +228,21 @@ type CardAttachment struct {
 }
 
 type ImageCard struct {
-	CardType string     `json:"cardType"`
-	Caption  string     `json:"caption,omitempty"`
-	Image    *ImageInfo `json:"image,omitempty"`
+	CardType   string      `json:"cardType"`
+	Caption    string      `json:"caption,omitempty"`
+	Image      *ImageInfo  `json:"image,omitempty"`
+	ImageChunk *ImageChunk `json:"image_chunk,omitempty"`
 }
 
 type ImageInfo struct {
 	Title    string `json:"title,omitempty"`
 	Original string `json:"original,omitempty"`
 	Link     string `json:"link,omitempty"`
+}
+
+type ImageChunk struct {
+	ImageURL string `json:"imageUrl,omitempty"`
+	Progress int    `json:"progress,omitempty"`
 }
 
 type CachedImageGen struct {
@@ -255,4 +267,18 @@ type ShareRequest struct {
 // ShareResponse 会话分享响应
 type ShareResponse struct {
 	ShareLinkID string `json:"shareLinkId"`
+}
+
+// ToolUsageCardData 工具使用卡片（grok-4.20 讨论组）
+type ToolUsageCardData struct {
+	ChatroomSend *ChatroomSend `json:"chatroomSend,omitempty"`
+}
+
+type ChatroomSend struct {
+	Args ChatroomSendArgs `json:"args"`
+}
+
+type ChatroomSendArgs struct {
+	Message string `json:"message"`
+	To      string `json:"to"`
 }

@@ -316,6 +316,7 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var imageURLs []string
 	var conversationID, responseID string
 
@@ -376,8 +377,27 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 			imageURLs = append(imageURLs, grokResp.CachedImageGenerationResponse.ImageURL)
 		}
 
+		// grok-4.20 generated_image_card：从 cardAttachment 提取图片
+		if grokResp.CardAttachment != nil && grokResp.CardAttachment.JSONData != "" {
+			var cardData ImageCard
+			if err := json.Unmarshal([]byte(grokResp.CardAttachment.JSONData), &cardData); err == nil {
+				if cardData.CardType == "generated_image_card" && cardData.ImageChunk != nil && cardData.ImageChunk.Progress == 100 && cardData.ImageChunk.ImageURL != "" {
+					imageURLs = append(imageURLs, cardData.ImageChunk.ImageURL)
+				}
+			}
+		}
+
 		isThinkingContent := grokResp.IsThinking && grokResp.MessageTag != "header"
 		isSearchResult := grokResp.MessageTag == "raw_function_result" && grokResp.WebSearchResults != nil
+
+		// grok-4.20 讨论组：chatroom_send → reasoning_content
+		if grokResp.MessageTag == "tool_usage_card" && grokResp.ToolUsageCard != nil && grokResp.ToolUsageCard.ChatroomSend != nil {
+			escapedMsg, _ := json.Marshal(grokResp.ToolUsageCard.ChatroomSend.Args.Message)
+			msg := fmt.Sprintf("\n%s: %s\n", grokResp.RolloutID, string(escapedMsg[1:len(escapedMsg)-1]))
+			writeSSE(w, createChunk(model, "", msg, false, false))
+			flusher.Flush()
+			continue
+		}
 
 		if isThinkingContent || isSearchResult {
 			content := processToolResponse(grokResp)
@@ -428,6 +448,7 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 
 func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, cookie string) {
 	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var finalContent, reasoningContent string
 	var imageURLs []string
 	var conversationID, responseID string
@@ -480,8 +501,25 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 			imageURLs = append(imageURLs, grokResp.CachedImageGenerationResponse.ImageURL)
 		}
 
+		// grok-4.20 generated_image_card：从 cardAttachment 提取图片
+		if grokResp.CardAttachment != nil && grokResp.CardAttachment.JSONData != "" {
+			var cardData ImageCard
+			if err := json.Unmarshal([]byte(grokResp.CardAttachment.JSONData), &cardData); err == nil {
+				if cardData.CardType == "generated_image_card" && cardData.ImageChunk != nil && cardData.ImageChunk.Progress == 100 && cardData.ImageChunk.ImageURL != "" {
+					imageURLs = append(imageURLs, cardData.ImageChunk.ImageURL)
+				}
+			}
+		}
+
 		isThinkingContent := grokResp.IsThinking && grokResp.MessageTag != "header"
 		isSearchResult := grokResp.MessageTag == "raw_function_result" && grokResp.WebSearchResults != nil
+
+		// grok-4.20 讨论组：chatroom_send → reasoning_content
+		if grokResp.MessageTag == "tool_usage_card" && grokResp.ToolUsageCard != nil && grokResp.ToolUsageCard.ChatroomSend != nil {
+			escapedMsg, _ := json.Marshal(grokResp.ToolUsageCard.ChatroomSend.Args.Message)
+			reasoningContent += fmt.Sprintf("\n%s: %s\n", grokResp.RolloutID, string(escapedMsg[1:len(escapedMsg)-1]))
+			continue
+		}
 
 		if isThinkingContent || isSearchResult {
 			content := processToolResponse(grokResp)
