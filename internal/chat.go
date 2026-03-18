@@ -318,6 +318,7 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var imageURLs []string
+	finalStarted := false // 正式回复是否已开始
 
 	writeSSE(w, createChunk(model, "", "", false, true))
 	flusher.Flush()
@@ -381,6 +382,11 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 		isThinkingContent := grokResp.IsThinking && grokResp.MessageTag != "header"
 		isSearchResult := grokResp.MessageTag == "raw_function_result" && grokResp.WebSearchResults != nil
 
+		// 正式回复已开始后，忽略迟到的思考内容
+		if isThinkingContent && finalStarted {
+			continue
+		}
+
 		// grok-4.20 讨论组：chatroom_send → reasoning_content
 		if grokResp.MessageTag == "tool_usage_card" && grokResp.ToolUsageCard != nil && grokResp.ToolUsageCard.ChatroomSend != nil {
 			escapedMsg, _ := json.Marshal(grokResp.ToolUsageCard.ChatroomSend.Args.Message)
@@ -399,6 +405,7 @@ func handleStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model, co
 		}
 
 		if !grokResp.IsThinking && grokResp.MessageTag != "tool_usage_card" && grokResp.MessageTag != "header" && grokResp.MessageTag != "raw_function_result" {
+			finalStarted = true
 			content := processToolResponse(grokResp)
 			if content != "" {
 				writeSSE(w, createChunk(model, content, "", false, false))
@@ -440,6 +447,7 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 	var finalContent, reasoningContent string
 	var imageURLs []string
+	finalStarted := false // 正式回复是否已开始
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -494,6 +502,11 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 		isThinkingContent := grokResp.IsThinking && grokResp.MessageTag != "header"
 		isSearchResult := grokResp.MessageTag == "raw_function_result" && grokResp.WebSearchResults != nil
 
+		// 正式回复已开始后，忽略迟到的思考内容
+		if isThinkingContent && finalStarted {
+			continue
+		}
+
 		// grok-4.20 讨论组：chatroom_send → reasoning_content
 		if grokResp.MessageTag == "tool_usage_card" && grokResp.ToolUsageCard != nil && grokResp.ToolUsageCard.ChatroomSend != nil {
 			escapedMsg, _ := json.Marshal(grokResp.ToolUsageCard.ChatroomSend.Args.Message)
@@ -509,6 +522,7 @@ func handleNonStreamResponse(w http.ResponseWriter, resp *fhttp.Response, model,
 		}
 
 		if grokResp.Token != "" && !grokResp.IsThinking {
+			finalStarted = true
 			finalContent += grokResp.Token
 		}
 	}

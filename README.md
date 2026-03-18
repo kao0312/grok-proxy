@@ -11,11 +11,21 @@ grok-proxy 是一个基于 Go 语言的代理服务，将 Grok 网页聊天转�
 - 支持多模态图片输入
 - 支持图片生成
 - 支持联网搜索
+- 支持 SOCKS5 代理池（随机轮询）
 
 ## 快速开始
 
 ```bash
 docker run -d -p 8080:8080 ghcr.io/kao0312/grok-proxy:latest
+```
+
+挂载代理池：
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v ./proxies.txt:/app/proxies.txt \
+  ghcr.io/kao0312/grok-proxy:latest
 ```
 
 自定义配置：
@@ -24,6 +34,7 @@ docker run -d -p 8080:8080 ghcr.io/kao0312/grok-proxy:latest
 docker run -d \
   -p 8080:8080 \
   -e LOG_LEVEL=ERROR \
+  -v ./proxies.txt:/app/proxies.txt \
   ghcr.io/kao0312/grok-proxy:latest
 ```
 
@@ -95,6 +106,18 @@ curl http://localhost:8080/v1/models
 - HTTP/HTTPS URL
 - Base64 编码 (data:image/jpeg;base64,...)
 
+## 代理池配置
+
+在项目根目录创建 `proxies.txt` 文件（Docker 部署通过 `-v` 挂载），每行一个代理：
+
+```
+# SOCKS5 代理，支持两种格式
+ip:port
+ip:port:username:password
+```
+
+- 不提供 `proxies.txt` 时自动直连
+- 每次请求随机选择一个代理
 ## 注意事项
 
 - Grok 不支持多轮对话历史，只能拼接历史消息

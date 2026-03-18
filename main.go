@@ -9,6 +9,7 @@ import (
 func main() {
 	internal.LoadConfig()
 	internal.InitLogger()
+	internal.LoadProxies("proxies.txt")
 
 	http.HandleFunc("/v1/models", internal.HandleModels)
 	http.HandleFunc("/v1/chat/completions", internal.HandleChatCompletions)

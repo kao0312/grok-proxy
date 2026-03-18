@@ -14,6 +14,9 @@ WORKDIR /app
 
 COPY --from=builder /app/grok-proxy .
 
+# proxies.txt 可通过 docker run -v ./proxies.txt:/app/proxies.txt 挂载
+VOLUME ["/app/proxies.txt"]
+
 EXPOSE 8080
 
 CMD ["./grok-proxy"]

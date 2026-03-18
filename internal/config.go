@@ -71,6 +71,11 @@ func GetHTTPClient() tls_client.HttpClient {
 		tls_client.WithRandomTLSExtensionOrder(), // 随机 TLS 扩展顺序，必须启用
 	}
 
+	if proxyUrl := getRandomProxyUrl(); proxyUrl != "" {
+		LogDebug("Using proxy: %s", proxyUrl)
+		options = append(options, tls_client.WithProxyUrl(proxyUrl))
+	}
+
 	client, err := tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
 	if err != nil {
 		LogError("Failed to create TLS client: %v", err)

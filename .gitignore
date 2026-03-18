@@ -23,6 +23,9 @@ go.work
 .env
 .env.local
 
+# Proxy
+proxies.txt
+
 # Image storage
 image/
 
